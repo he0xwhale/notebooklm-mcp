@@ -4,24 +4,24 @@ Tracking of all directories where `@roomi-fields/notebooklm-mcp` is listed or su
 
 ## Currently Listed
 
-| Directory          | URL                                                                                                              | Notes                                           |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| **Glama.ai**       | [glama.ai/mcp/servers/@roomi-fields/notebooklm-mcp](https://glama.ai/mcp/servers/@roomi-fields/notebooklm-mcp)   | Security A, Quality A, License A. Auto-indexed. |
-| **PulseMCP**       | [pulsemcp.com/servers/pleaseprompto-notebooklm](https://www.pulsemcp.com/servers/pleaseprompto-notebooklm)       | #163 global, ~177k visitors. Auto-aggregated.   |
-| **mcpservers.org** | [mcpservers.org/servers/roomi-fields/notebooklm-mcp](https://mcpservers.org/servers/roomi-fields/notebooklm-mcp) | Full listing. Auto-indexed.                     |
-| **MCPMarket.com**  | [mcpmarket.com/server/notebooklm](https://mcpmarket.com/server/notebooklm)                                       | Has Top 100 leaderboard.                        |
-| **LobeHub**        | [lobehub.com/mcp/roomi-fields-notebooklm-mcp](https://lobehub.com/mcp/roomi-fields-notebooklm-mcp)               | Auto-indexed.                                   |
-| **npm**            | [npmjs.com/package/@roomi-fields/notebooklm-mcp](https://www.npmjs.com/package/@roomi-fields/notebooklm-mcp)     | v1.5.7 published with `mcpName` field.          |
-| **Official MCP Registry** | [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io/) | `io.github.roomi-fields/notebooklm-mcp` v1.5.7, status active. |
-| **Cursor Directory** | [cursor.directory/mcp/notebooklm-mcp](https://cursor.directory/mcp/notebooklm-mcp) | Submitted via web form. Live. |
-| **awesome-mcp-servers** | [github.com/punkpeye/awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers) | 79.6k stars. Merged via [PR #2467](https://github.com/punkpeye/awesome-mcp-servers/pull/2467). |
+| Directory                 | URL                                                                                                              | Notes                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Glama.ai**              | [glama.ai/mcp/servers/@roomi-fields/notebooklm-mcp](https://glama.ai/mcp/servers/@roomi-fields/notebooklm-mcp)   | Security A, Quality A, License A. Auto-indexed.                                                |
+| **PulseMCP**              | [pulsemcp.com/servers/pleaseprompto-notebooklm](https://www.pulsemcp.com/servers/pleaseprompto-notebooklm)       | #163 global, ~177k visitors. Auto-aggregated.                                                  |
+| **mcpservers.org**        | [mcpservers.org/servers/roomi-fields/notebooklm-mcp](https://mcpservers.org/servers/roomi-fields/notebooklm-mcp) | Full listing. Auto-indexed.                                                                    |
+| **MCPMarket.com**         | [mcpmarket.com/server/notebooklm](https://mcpmarket.com/server/notebooklm)                                       | Has Top 100 leaderboard.                                                                       |
+| **LobeHub**               | [lobehub.com/mcp/roomi-fields-notebooklm-mcp](https://lobehub.com/mcp/roomi-fields-notebooklm-mcp)               | Auto-indexed.                                                                                  |
+| **npm**                   | [npmjs.com/package/@roomi-fields/notebooklm-mcp](https://www.npmjs.com/package/@roomi-fields/notebooklm-mcp)     | v1.5.7 published with `mcpName` field.                                                         |
+| **Official MCP Registry** | [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io/)                                    | `io.github.roomi-fields/notebooklm-mcp` v1.5.7, status active.                                 |
+| **Cursor Directory**      | [cursor.directory/mcp/notebooklm-mcp](https://cursor.directory/mcp/notebooklm-mcp)                               | Submitted via web form. Live.                                                                  |
+| **awesome-mcp-servers**   | [github.com/punkpeye/awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers)                       | 79.6k stars. Merged via [PR #2467](https://github.com/punkpeye/awesome-mcp-servers/pull/2467). |
 
 ## Pending Review
 
-| Directory                             | Submission          | Date       | Link                                                                         |
-| ------------------------------------- | ------------------- | ---------- | ---------------------------------------------------------------------------- |
-| **Cline Marketplace**                 | Issue               | 2026-02-27 | [Issue #703](https://github.com/cline/mcp-marketplace/issues/703)            |
-| **mcp.so**                            | Comment on Issue #1 | 2026-02-27 | [Comment](https://github.com/chatmcp/mcpso/issues/1#issuecomment-3971662494) |
+| Directory             | Submission          | Date       | Link                                                                         |
+| --------------------- | ------------------- | ---------- | ---------------------------------------------------------------------------- |
+| **Cline Marketplace** | Issue               | 2026-02-27 | [Issue #703](https://github.com/cline/mcp-marketplace/issues/703)            |
+| **mcp.so**            | Comment on Issue #1 | 2026-02-27 | [Comment](https://github.com/chatmcp/mcpso/issues/1#issuecomment-3971662494) |
 
 ## Not Yet Submitted (Tier 2)
 
