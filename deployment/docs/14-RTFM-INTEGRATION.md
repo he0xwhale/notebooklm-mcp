@@ -218,11 +218,14 @@ For batches above ~50 questions, multi-account rotation kicks in automatically w
 
 Sidecar `{slug}.json` files conform to this schema. Stable across releases under SemVer; breaking changes will bump the major version.
 
+> **Canonical URL** (resolvable, served as `application/schema+json` with CORS): <https://schemas.roomi-fields.com/nblm-answer-v1.json> — fetch from any JSON Schema validator. The version below mirrors the canonical document.
+
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.roomi-fields.com/nblm-answer-v1.json",
   "title": "NotebookLM Answer (nblm-answer-v1)",
+  "description": "Structured sidecar payload produced by notebooklm-mcp /batch-to-vault. Encodes a single NotebookLM answer with citations, source positions, and session metadata for typed ingestion by retrieval systems (e.g. RTFM).",
   "type": "object",
   "required": ["type", "version", "asked_at", "question", "answer", "citations", "metadata"],
   "properties": {
