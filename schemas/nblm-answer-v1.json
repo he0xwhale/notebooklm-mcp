@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.roomi-fields.com/nblm-answer-v1.json",
+  "title": "NotebookLM Answer (nblm-answer-v1)",
+  "description": "Structured sidecar payload produced by notebooklm-mcp /batch-to-vault. Encodes a single NotebookLM answer with citations, source positions, and session metadata for typed ingestion by retrieval systems (e.g. RTFM).",
+  "type": "object",
+  "required": ["type", "version", "asked_at", "question", "answer", "citations", "metadata"],
+  "properties": {
+    "$schema": { "type": "string", "format": "uri" },
+    "type": { "const": "nblm-answer" },
+    "version": { "const": "1.0" },
+    "asked_at": { "type": "string", "format": "date-time" },
+    "session_id": { "type": ["string", "null"] },
+    "notebook": {
+      "type": "object",
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "name": { "type": ["string", "null"] },
+        "url": { "type": ["string", "null"] }
+      }
+    },
+    "question": { "type": "string" },
+    "answer": {
+      "type": "object",
+      "required": ["text", "format"],
+      "properties": {
+        "text": { "type": "string" },
+        "format": { "const": "markdown" }
+      }
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["marker", "number"],
+        "properties": {
+          "marker": { "type": "string", "description": "Display marker, e.g. \"[1]\"" },
+          "number": { "type": "integer", "minimum": 1 },
+          "source_name": { "type": ["string", "null"] },
+          "source_text": {
+            "type": ["string", "null"],
+            "description": "Highlighted excerpt from the cited source"
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "extraction_success": { "type": ["boolean", "null"] },
+        "citations_count": { "type": "integer", "minimum": 0 },
+        "source_names": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
