@@ -32,3 +32,59 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Extract changelog section for this release
+        id: changelog
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE="$RUNNER_TEMP/release-notes.md"
+
+          # Pull the section between "## [VERSION]" and the next "## [" heading.
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; next }
+            found && /^## \[/        { exit }
+            found                    { print }
+          ' CHANGELOG.md > "$NOTES_FILE"
+
+          # Strip leading "---" separator and surrounding blank lines if present.
+          sed -i -E '1{/^[[:space:]]*$/d}; ${/^[[:space:]]*---[[:space:]]*$/d}' "$NOTES_FILE"
+
+          if [ -s "$NOTES_FILE" ]; then
+            {
+              echo ""
+              echo "---"
+              echo ""
+              echo "**Install / upgrade:** \`npm i -g @roomi-fields/notebooklm-mcp@$VERSION\`"
+              echo ""
+              echo "**Full changelog:** https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md"
+            } >> "$NOTES_FILE"
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+            echo "Extracted $(wc -l < "$NOTES_FILE") lines of notes for $VERSION"
+          else
+            echo "No CHANGELOG section found for [$VERSION]; will use auto-generated notes"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release (with CHANGELOG notes)
+        if: steps.changelog.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "${{ github.repository }}" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file "${{ steps.changelog.outputs.notes_file }}" \
+            --verify-tag
+
+      - name: Create GitHub Release (auto-generated fallback)
+        if: steps.changelog.outputs.found == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "${{ github.repository }}" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --verify-tag
