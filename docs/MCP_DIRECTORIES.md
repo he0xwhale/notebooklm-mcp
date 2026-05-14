@@ -15,6 +15,7 @@ Tracking of all directories where `@roomi-fields/notebooklm-mcp` is listed or su
 | **Claude Code marketplace**  | [github.com/roomi-fields/claude-plugins](https://github.com/roomi-fields/claude-plugins)                     | Aggregated marketplace (NotebookLM + RTFM). Upstream plugin manifest lives here at `.claude-plugin/plugin.json`. Install: `/plugin marketplace add roomi-fields/claude-plugins` + `/plugin install notebooklm@roomi-fields`.                                             |
 | **Official MCP Registry**    | [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io/)                                | `io.github.roomi-fields/notebooklm-mcp`. Last manual publish via `mcp-publisher` (see process section). `mcpName` declared in `package.json`.                                                                                                                            |
 | **Docs site (GitHub Pages)** | [roomi-fields.github.io/notebooklm-mcp](https://roomi-fields.github.io/notebooklm-mcp/)                      | Docusaurus, auto-deployed on push to `main` by `.github/workflows/deploy-docs.yml`. Source under `website/`.                                                                                                                                                             |
+| **Smithery**                 | [smithery.ai/servers/roomifields/notebooklm-mcp](https://smithery.ai/servers/roomifields/notebooklm-mcp)     | Published 2026-05-14, quality score 60/100 (Metadata 35/35, Config UX 25/25, Capability 0/40 — Smithery can't introspect tools, the server needs a browser + Google auth to boot). Namespace is `roomifields` (no hyphen). Publish process below.                        |
 | **Schema host**              | [schemas.roomi-fields.com/nblm-answer-v1.json](https://schemas.roomi-fields.com/nblm-answer-v1.json)         | Canonical home of the `nblm-answer-v1` JSON Schema, mirrored from `schemas/nblm-answer-v1.json` in this repo. Also embedded in `deployment/docs/14-RTFM-INTEGRATION.md` and referenced by `src/utils/vault-writer.ts`. Bump to v2 on breaking changes — never mutate v1. |
 
 ### Auto-indexed third-party directories
@@ -32,11 +33,10 @@ Tracking of all directories where `@roomi-fields/notebooklm-mcp` is listed or su
 
 ## Pending Review
 
-| Directory             | Submission                             | Date       | Link / Notes                                                                                                                                                                                                                                                                                           |
-| --------------------- | -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Cline Marketplace** | Issue                                  | 2026-02-27 | [Issue #703](https://github.com/cline/mcp-marketplace/issues/703). Logo ready: `assets/notebooklm-mcp-logo-400.png` (400×400). Post it on the issue to unblock.                                                                                                                                        |
-| **Smithery**          | `smithery.yaml` committed to repo root | 2026-05-14 | ~6k servers. **`smithery.yaml` is the legacy discovery format** — modern Smithery (2026) wants either a public HTTPS URL or an `.mcpb` bundle for stdio servers. Since this server needs a local Chrome profile + Google auth, it can't be hosted; the realistic path is publishing an `.mcpb` bundle. |
-| **mcp.so**            | Comment on Issue #1 (never landed)     | 2026-02-27 | ~19.7k servers, largest by volume. The old issue-comment route stalled — **resubmit via their current web form** at mcp.so.                                                                                                                                                                            |
+| Directory             | Submission                         | Date       | Link / Notes                                                                                                                                                  |
+| --------------------- | ---------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cline Marketplace** | Issue + logo posted                | 2026-05-14 | [Issue #703](https://github.com/cline/mcp-marketplace/issues/703). Logo `assets/notebooklm-mcp-logo-400.png` posted on the issue; awaiting maintainer review. |
+| **mcp.so**            | Comment on Issue #1 (never landed) | 2026-02-27 | ~19.7k servers, largest by volume. The old issue-comment route stalled — **resubmit via their current web form** at mcp.so.                                   |
 
 ## Closed to Submissions
 
@@ -163,6 +163,33 @@ Glama auto-rebuilds the Docker image on each release commit using **their own** 
 **Known infra fragility**: their builder can ECONNRESET while pulling `docker.io/library/debian:bookworm-slim` metadata. When that happens, the build aborts before `pnpm install` even runs. Retry from the admin UI at `https://glama.ai/mcp/servers/roomi-fields/notebooklm-mcp/admin/dockerfile/` (re-save the build spec to relaunch, or click Retry on the failed test detail page).
 
 **Latent pnpm/npm gap**: our `overrides` block in `package.json` is **npm-only**. pnpm reads `pnpm.overrides`. Without a mirror, the Glama image would resolve `ip-address@10.1.0` (vulnerable) instead of the pinned `^10.2.0`. Add a `pnpm.overrides` mirror if/when Glama enables vulnerability scanning on their image, or migrate to a `pnpm-lock.yaml` in-repo.
+
+### 6. Smithery (manual, MCPB bundle)
+
+Smithery lists this as a **local stdio** server (`remote: false`). It is **not** hosted — users still run it locally.
+
+1. Build the bundle from the committed source:
+   ```bash
+   npx @anthropic-ai/mcpb pack mcpb notebooklm-mcp.mcpb
+   ```
+2. Publish (needs Node ≥ 20 — the upload uses `globalThis.File`):
+   ```bash
+   npx @smithery/cli auth login
+   npx @smithery/cli mcp publish notebooklm-mcp.mcpb -n roomifields/notebooklm-mcp
+   ```
+3. Push server-level metadata (the bundle manifest does **not** populate the listing's description/homepage/icon):
+   ```bash
+   TOKEN=$(npx @smithery/cli auth token --policy '{"namespaces":"roomifields","ttl":"30m"}' | jq -r .token)
+   curl -X PATCH "https://registry.smithery.ai/servers/roomifields%2Fnotebooklm-mcp" \
+     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"description":"...","homepage":"https://roomi-fields.github.io/notebooklm-mcp/","iconUrl":"https://raw.githubusercontent.com/roomi-fields/notebooklm-mcp/main/mcpb/icon.png"}'
+   ```
+
+**Gotchas:**
+
+- Namespace is **`roomifields`** (no hyphen) — `roomi-fields` returns 403.
+- The MCPB manifest **must declare at least one `user_config` option** or the publish fails with `400 "No values to set"`. We declare `data_dir` → `NOTEBOOKLM_DATA_DIR`.
+- **Capability Quality stays 0/40**: Smithery can't introspect the tool list because the server boots a browser and needs Google auth — it can't run in their introspection sandbox. Metadata (35/35) + Config UX (25/25) → 60/100, which is the realistic ceiling for this server.
 
 ## Files Related to Distribution
 
