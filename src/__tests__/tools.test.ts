@@ -100,10 +100,11 @@ describe('ToolHandlers', () => {
       expect(tools.length).toBeGreaterThan(0);
     });
 
-    it('should include ask_question tool', () => {
+    it('should include the notebook.ask tool', () => {
       const tools = buildToolDefinitions(mockLibrary);
 
-      const askQuestion = tools.find((t: any) => t.name === 'ask_question');
+      // v2 advertises canonical dot-notation names.
+      const askQuestion = tools.find((t: any) => t.name === 'notebook.ask');
       expect(askQuestion).toBeDefined();
       expect(askQuestion.inputSchema.required).toContain('question');
     });
@@ -112,34 +113,34 @@ describe('ToolHandlers', () => {
       const tools = buildToolDefinitions(mockLibrary);
 
       const toolNames = tools.map((t: any) => t.name);
-      expect(toolNames).toContain('list_sessions');
-      expect(toolNames).toContain('close_session');
-      expect(toolNames).toContain('reset_session');
+      expect(toolNames).toContain('session.list');
+      expect(toolNames).toContain('session.close');
+      expect(toolNames).toContain('session.reset');
     });
 
     it('should include notebook library tools', () => {
       const tools = buildToolDefinitions(mockLibrary);
 
       const toolNames = tools.map((t: any) => t.name);
-      expect(toolNames).toContain('list_notebooks');
-      expect(toolNames).toContain('add_notebook');
-      expect(toolNames).toContain('get_notebook');
-      expect(toolNames).toContain('remove_notebook');
+      expect(toolNames).toContain('library.list');
+      expect(toolNames).toContain('library.add');
+      expect(toolNames).toContain('library.get');
+      expect(toolNames).toContain('library.remove');
     });
 
     it('should include auth tools', () => {
       const tools = buildToolDefinitions(mockLibrary);
 
       const toolNames = tools.map((t: any) => t.name);
-      expect(toolNames).toContain('setup_auth');
-      expect(toolNames).toContain('de_auth');
-      expect(toolNames).toContain('get_health');
+      expect(toolNames).toContain('auth.setup');
+      expect(toolNames).toContain('auth.logout');
+      expect(toolNames).toContain('server.health');
     });
 
     it('should include cleanup tool', () => {
       const tools = buildToolDefinitions(mockLibrary);
 
-      const cleanup = tools.find((t: any) => t.name === 'cleanup_data');
+      const cleanup = tools.find((t: any) => t.name === 'server.cleanup');
       expect(cleanup).toBeDefined();
     });
 

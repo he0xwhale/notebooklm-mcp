@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-05-14
+
+### Changed — tool names are now a dot-notation tree
+
+Every tool was renamed from a flat `snake_case` list to a navigable
+`namespace.action` tree (9 namespaces): `notebook.*`, `library.*`, `session.*`,
+`source.*`, `content.*`, `note.*`, `auth.*`, `server.*`, `vault.*`. For
+example `ask_question` → `notebook.ask`, `add_source` → `source.add`,
+`list_sessions` → `session.list`, `get_health` → `server.health`,
+`batch_to_vault` → `vault.batch`. `tools/list` now advertises only the
+canonical names. This aligns with MCP naming best practice and is the reason
+for the major version bump.
+
+**Backward compatible — nothing breaks.** Both the stdio server and the HTTP
+proxy still accept the legacy flat names as aliases: the dispatch layer
+normalises any accepted name (canonical or legacy) before routing. Existing
+scripts, Claude Code / Cursor / n8n configs, and batch jobs that hard-code the
+old names keep working unchanged. New integrations should use the canonical
+names — the legacy aliases are supported but no longer advertised.
+
+The legacy ↔ canonical mapping lives in one place: `src/tools/tool-names.ts`.
+
+### Added
+
+- **MCP `annotations` on every tool** — accurate `readOnlyHint` /
+  `destructiveHint` / `idempotentHint` / `openWorldHint` / `title` per tool,
+  from a central table in `src/tools/index.ts`.
+- **MCP `outputSchema` on every tool** — the shared `{ success, data?, error? }`
+  result envelope every handler returns. The stdio dispatch now also returns
+  `structuredContent` matching that schema, not just text.
+- `smithery.yaml` + `mcpb/` bundle source — the server is now published on the
+  [Smithery registry](https://smithery.ai/servers/roomifields/notebooklm-mcp).
+
+---
+
 ## [1.7.9] - 2026-05-06
 
 ### Security

@@ -51,6 +51,7 @@ import { AuthManager } from './auth/auth-manager.js';
 import { SessionManager } from './session/session-manager.js';
 import { NotebookLibrary } from './library/notebook-library.js';
 import { ToolHandlers, buildToolDefinitions } from './tools/index.js';
+import { CANONICAL_TO_LEGACY } from './tools/tool-names.js';
 import { CONFIG } from './config.js';
 import { log } from './utils/logger.js';
 
@@ -350,7 +351,12 @@ class NotebookLMMCPServer {
 
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
+      const { name: requestedName, arguments: args } = request.params;
+      // v2 tools are advertised under canonical dot-notation names
+      // (e.g. `notebook.ask`). The dispatch switch and handlers still use the
+      // legacy flat names internally — and legacy names remain accepted as
+      // aliases, so existing integrations keep working.
+      const name = CANONICAL_TO_LEGACY[requestedName] ?? requestedName;
       const progressToken = (args as Record<string, unknown> | undefined)?._meta as
         | { progressToken?: string }
         | undefined;

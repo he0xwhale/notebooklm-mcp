@@ -37,6 +37,7 @@ import {
   Tool,
   Resource,
 } from '@modelcontextprotocol/sdk/types.js';
+import { toCanonicalName, toLegacyName } from './tools/tool-names.js';
 
 const packageJson = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf-8')
@@ -416,13 +417,23 @@ function buildProxyToolDefinitions(): Tool[] {
   ];
 }
 
+/** Tool definitions advertised over stdio — canonical v2 dot-notation names. */
+function buildCanonicalProxyToolDefinitions(): Tool[] {
+  return buildProxyToolDefinitions().map((tool) => ({
+    ...tool,
+    name: toCanonicalName(tool.name),
+  }));
+}
+
 /**
- * Map tool calls to HTTP endpoints
+ * Map tool calls to HTTP endpoints.
+ * Accepts both canonical (v2 dot-notation) and legacy flat tool names.
  */
 async function handleToolCall(
-  name: string,
+  requestedName: string,
   args: Record<string, unknown>
 ): Promise<{ success: boolean; data?: unknown; error?: string }> {
+  const name = toLegacyName(requestedName);
   try {
     switch (name) {
       // Query endpoints
@@ -590,7 +601,7 @@ class StdioHttpProxyServer {
       }
     );
 
-    this.toolDefinitions = buildProxyToolDefinitions();
+    this.toolDefinitions = buildCanonicalProxyToolDefinitions();
     this.setupHandlers();
     this.setupShutdownHandlers();
 
@@ -660,8 +671,10 @@ class StdioHttpProxyServer {
 
     // Handle tool calls - proxy to HTTP server
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-      log(`🔧 Tool call: ${name}`);
+      const { name: requestedName, arguments: args } = request.params;
+      // Accept both canonical (v2 dot-notation) and legacy flat names.
+      const name = toLegacyName(requestedName);
+      log(`🔧 Tool call: ${requestedName}`);
 
       // Extract progress token from client request (if provided)
       const meta = (request.params as Record<string, unknown>)._meta as

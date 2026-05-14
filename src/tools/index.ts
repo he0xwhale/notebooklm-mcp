@@ -16,6 +16,7 @@
  */
 
 import fs from 'fs';
+import { LEGACY_TO_CANONICAL } from './tool-names.js';
 import { SessionManager } from '../session/session-manager.js';
 import { AuthManager } from '../auth/auth-manager.js';
 import { NotebookLibrary } from '../library/notebook-library.js';
@@ -1477,9 +1478,12 @@ User: "Yes" → call remove_notebook`,
     },
   ];
 
-  // Attach the shared output schema and behaviour hints to every tool.
+  // Rename to canonical (v2 dot-notation) names and attach the shared output
+  // schema + behaviour hints. Annotation lookup uses the legacy name, which is
+  // still `tool.name` at this point.
   return defs.map((tool) => ({
     ...tool,
+    name: LEGACY_TO_CANONICAL[tool.name] ?? tool.name,
     outputSchema: TOOL_RESULT_OUTPUT_SCHEMA,
     annotations: TOOL_ANNOTATIONS[tool.name] ?? tool.annotations,
   }));
