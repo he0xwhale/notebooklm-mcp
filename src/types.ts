@@ -126,6 +126,20 @@ export interface Tool {
     properties: Record<string, JsonSchemaProperty>;
     required?: string[];
   };
+  /** Shape of the structured result returned by the tool (the ToolResult envelope). */
+  outputSchema?: {
+    type: 'object';
+    properties: Record<string, JsonSchemaProperty>;
+    required?: string[];
+  };
+  /** Optional behaviour hints surfaced to MCP clients (read-only, destructive, etc.). */
+  annotations?: {
+    title?: string;
+    readOnlyHint?: boolean;
+    destructiveHint?: boolean;
+    idempotentHint?: boolean;
+    openWorldHint?: boolean;
+  };
 }
 
 /**

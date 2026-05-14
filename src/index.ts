@@ -637,7 +637,8 @@ class NotebookLMMCPServer {
             };
         }
 
-        // Return result
+        // Return result — both as text (for display) and as structuredContent
+        // (matching each tool's outputSchema: the ToolResult envelope).
         return {
           content: [
             {
@@ -645,6 +646,7 @@ class NotebookLMMCPServer {
               text: JSON.stringify(result, null, 2),
             },
           ],
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

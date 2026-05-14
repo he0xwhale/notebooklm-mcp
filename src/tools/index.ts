@@ -171,10 +171,233 @@ Tip: Tell the user you can manage NotebookLM library and ask which notebook to u
 }
 
 /**
+ * Behaviour hints for each tool, surfaced via the MCP `annotations` field.
+ *
+ * - readOnlyHint: the tool does not modify any state (library, session, NotebookLM, disk).
+ * - destructiveHint: the tool deletes or irreversibly changes existing data.
+ * - idempotentHint: calling it again with the same args has no additional effect.
+ * - openWorldHint: the tool reaches out to NotebookLM / the browser / the network.
+ */
+const TOOL_ANNOTATIONS: Record<string, NonNullable<Tool['annotations']>> = {
+  ask_question: {
+    title: 'Ask a question',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  auto_discover_notebook: {
+    title: 'Auto-discover notebook metadata',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  add_notebook: {
+    title: 'Add notebook to library',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: false,
+  },
+  list_notebooks: {
+    title: 'List library notebooks',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  get_notebook: {
+    title: 'Get notebook details',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  select_notebook: {
+    title: 'Select the active notebook',
+    readOnlyHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  update_notebook: {
+    title: 'Update notebook metadata',
+    readOnlyHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  remove_notebook: {
+    title: 'Remove notebook from library',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  search_notebooks: {
+    title: 'Search the library',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  get_library_stats: {
+    title: 'Get library statistics',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  list_sessions: {
+    title: 'List active sessions',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  close_session: {
+    title: 'Close a session',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  reset_session: {
+    title: 'Reset session history',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  get_health: {
+    title: 'Get server health',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  setup_auth: {
+    title: 'Set up Google authentication',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  de_auth: {
+    title: 'Log out and clear authentication',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  re_auth: {
+    title: 'Re-authenticate or switch account',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  cleanup_data: {
+    title: 'Deep cleanup of MCP data',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: false,
+  },
+  add_source: {
+    title: 'Add a source to the notebook',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  delete_source: {
+    title: 'Delete a source',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  generate_content: {
+    title: 'Generate Studio content',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  list_content: {
+    title: 'List notebook content',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  download_content: {
+    title: 'Download generated content',
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  create_note: {
+    title: 'Create a note',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  save_chat_to_note: {
+    title: 'Save the chat to a note',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  convert_note_to_source: {
+    title: 'Convert a note to a source',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  batch_to_vault: {
+    title: 'Batch questions to a vault',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  list_notebooks_from_nblm: {
+    title: 'List notebooks from NotebookLM',
+    readOnlyHint: true,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
+  create_notebook: {
+    title: 'Create a new notebook',
+    readOnlyHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+  delete_notebooks_from_nblm: {
+    title: 'Delete notebooks from NotebookLM',
+    readOnlyHint: false,
+    destructiveHint: true,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+};
+
+/**
+ * Every tool handler resolves to the same `ToolResult` envelope
+ * (`{ success, data?, error? }`), so all tools share one output schema.
+ * The dispatch layer returns this object as `structuredContent`.
+ */
+const TOOL_RESULT_OUTPUT_SCHEMA: NonNullable<Tool['outputSchema']> = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+      description: 'Whether the tool call succeeded.',
+    },
+    data: {
+      type: 'object',
+      description: 'The tool payload on success. The exact shape depends on the tool.',
+    },
+    error: {
+      type: 'string',
+      description: 'Human-readable error message, present only when success is false.',
+    },
+  },
+  required: ['success'],
+};
+
+/**
  * Build Tool Definitions with NotebookLibrary context
  */
 export function buildToolDefinitions(library: NotebookLibrary): Tool[] {
-  return [
+  const defs: Tool[] = [
     {
       name: 'ask_question',
       description: buildAskQuestionDescription(library),
@@ -1253,6 +1476,13 @@ User: "Yes" → call remove_notebook`,
       },
     },
   ];
+
+  // Attach the shared output schema and behaviour hints to every tool.
+  return defs.map((tool) => ({
+    ...tool,
+    outputSchema: TOOL_RESULT_OUTPUT_SCHEMA,
+    annotations: TOOL_ANNOTATIONS[tool.name] ?? tool.annotations,
+  }));
 }
 
 /**
