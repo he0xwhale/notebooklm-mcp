@@ -1,6 +1,6 @@
 {
   "name": "@roomi-fields/notebooklm-mcp",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "mcpName": "io.github.roomi-fields/notebooklm-mcp",
   "description": "MCP server for NotebookLM API with HTTP REST API - Zero hallucinations from your notebooks",
   "type": "module",
@@ -75,7 +75,7 @@
   "overrides": {
     "ip-address": "^10.2.0",
     "fast-uri": "^3.1.2",
-    "hono": "^4.12.18",
+    "hono": "^4.12.25",
     "brace-expansion@^5.0.0": "^5.0.6",
     "qs": "^6.15.2"
   },

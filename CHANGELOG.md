@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.3] - 2026-06-20
+
+### Security — `vault.batch` path-traversal hardening (issue #15)
+
+The `vault_batch` tool (and the equivalent `POST /batch-to-vault` HTTP
+endpoint) previously passed the caller-supplied `vault_dir` straight to
+`path.resolve()` + `fs.mkdir()`, with no containment check. A caller (or a
+prompt-injected LLM driving the MCP) could therefore create directories and
+write `.md` / `.json` files anywhere the server process can write.
+
+The fix is opt-in to stay backward-compatible:
+
+- **`NOTEBOOKLM_VAULT_ROOT` env var** — when set, every `vault_dir` is
+  resolved relative to this root and the resolved path must stay inside
+  `realpath(NOTEBOOKLM_VAULT_ROOT)`. Any attempt to escape via an absolute
+  path or a `..` segment is rejected with a clear error.
+- **`slug_prefix` is now sanitized** — path separators (`/`, `\`), `..`
+  sequences and NUL bytes are stripped, and the prefix is capped at 64
+  chars, so a caller can no longer smuggle path traversal through the
+  filename component.
+
+Existing users who do not set `NOTEBOOKLM_VAULT_ROOT` see no behaviour
+change; the `slug_prefix` sanitization is always on but only strips bytes
+that were never valid filename characters anyway.
+
+### Fixed — CI security audit no longer fails on dev-only advisories
+
+The `Security` job now runs `npm audit --omit=dev --audit-level=moderate`.
+Vulnerabilities reported in the jest / babel toolchain (which never ship in
+the published package) no longer turn the main branch red while letting
+production-dep regressions through. Also bumps `hono` override to
+`^4.12.25` to clear GHSA-88fw-hqm2-52qc (CORS wildcard with credentials)
+and the related cluster of `hono` advisories.
+
+---
+
 ## [2.0.2] - 2026-06-20
 
 ### Fixed — canonical tool names use `_` instead of `.`

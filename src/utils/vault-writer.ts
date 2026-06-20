@@ -74,7 +74,50 @@ export function makeSlug(question: string, prefix: string, index: number): strin
     .replace(/^-+/, '');
   const idx = String(index + 1).padStart(3, '0');
   const cleanBase = base || 'question';
-  return prefix ? `${prefix}-${idx}-${cleanBase}` : `${idx}-${cleanBase}`;
+  const safePrefix = sanitizeSlugPrefix(prefix);
+  return safePrefix ? `${safePrefix}-${idx}-${cleanBase}` : `${idx}-${cleanBase}`;
+}
+
+/**
+ * Strip any path separators and traversal sequences from a caller-supplied
+ * `slug_prefix` so it can only contribute a filename component, never a
+ * sub-path. Empty input returns ''.
+ */
+export function sanitizeSlugPrefix(prefix: string | undefined): string {
+  if (!prefix) return '';
+  return prefix
+    .replace(/[/\\\0]/g, '')
+    .replace(/\.{2,}/g, '')
+    .replace(/^[.\-_]+/, '')
+    .substring(0, 64);
+}
+
+/**
+ * Resolve a caller-supplied `vault_dir` to an absolute path, optionally
+ * enforcing containment under `NOTEBOOKLM_VAULT_ROOT` when that env var is
+ * set. When the env var is unset, the legacy behaviour (any writable path) is
+ * preserved for backward compatibility — operators who want strict containment
+ * opt in by setting `NOTEBOOKLM_VAULT_ROOT`.
+ *
+ * Throws a clear error when the resolved path escapes the configured root.
+ */
+export function resolveVaultDir(input: string): string {
+  if (!input || typeof input !== 'string') {
+    throw new Error('vault_dir is required');
+  }
+  const root = process.env.NOTEBOOKLM_VAULT_ROOT;
+  if (!root) {
+    return path.resolve(input);
+  }
+  const absRoot = path.resolve(root);
+  const candidate = path.isAbsolute(input) ? path.resolve(input) : path.resolve(absRoot, input);
+  const rel = path.relative(absRoot, candidate);
+  if (rel.startsWith('..') || path.isAbsolute(rel)) {
+    throw new Error(
+      `vault_dir "${input}" escapes NOTEBOOKLM_VAULT_ROOT (${absRoot}); refusing to write outside the configured vault root`
+    );
+  }
+  return candidate;
 }
 
 /**
@@ -259,7 +302,7 @@ export async function runBatchToVault(
     session_id,
   } = args;
 
-  const absVaultDir = path.resolve(vault_dir);
+  const absVaultDir = resolveVaultDir(vault_dir);
   await fs.mkdir(absVaultDir, { recursive: true });
 
   const results: BatchToVaultFileResult[] = [];

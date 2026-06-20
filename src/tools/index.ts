@@ -1352,7 +1352,10 @@ User: "Yes" → call remove_notebook`,
           vault_dir: {
             type: 'string',
             description:
-              'Destination directory (absolute or relative). Created with mkdir -p if missing.',
+              'Destination directory (absolute or relative). Created with mkdir -p if missing. ' +
+              'Set NOTEBOOKLM_VAULT_ROOT in the server env to confine writes under a single ' +
+              'root (recommended for shared/remote setups); without it, any writable path is ' +
+              'accepted (legacy behaviour).',
           },
           notebook_id: {
             type: 'string',
