@@ -61,9 +61,9 @@ async function main() {
       );
     }
 
-    // 2. Get note content (if any exists)
-    if (listResult.success && listResult.notes.length > 0) {
-      const targetNote = listResult.notes[0];
+    // 2. Get note content for "第四题" specifically
+    const targetNote = listResult.notes.find((n) => n.title.includes('第四题'));
+    if (targetNote) {
       writeLog(`\n--- 2. Testing getNoteContent() for: "${targetNote.title}" ---`);
 
       const getResult = await contentManager.getNoteContent({
@@ -77,10 +77,10 @@ async function main() {
       } else {
         writeLog(`Retrieved Title: "${getResult.title}"`);
         writeLog(`Content Length: ${getResult.content.length} characters`);
-        writeLog(`Content Preview:\n${getResult.content.substring(0, 500)}`);
+        writeLog(`Content:\n${getResult.content}`);
       }
     } else {
-      writeLog('\n--- 2. Skipping getNoteContent() (No notes available) ---');
+      writeLog(`\n--- 2. Warning: Could not find note with title containing "第四题" ---`);
     }
 
     writeLog('\nClosing sessions...');
