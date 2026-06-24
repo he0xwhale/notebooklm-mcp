@@ -64,6 +64,7 @@ import type {
   NoteToSourceResult,
 } from './types.js';
 import { ContentGenerator } from './content-generator.js';
+import type { NotebookNote, NoteListResult, NoteGetInput, NoteGetResult } from '../types.js';
 
 // Note: UI selectors are defined inline in methods for better maintainability
 // as NotebookLM's UI may change frequently
@@ -4503,6 +4504,8 @@ export class ContentManager {
   ): Promise<import('patchright').ElementHandle<any> | null> {
     // Selectors for note items in the Studio panel
     const noteItemSelectors = [
+      'artifact-library-note',
+      '[class*="artifact-item-button"]',
       '.note-item',
       '[data-item="note"]',
       '.notes-list-item',
@@ -4545,7 +4548,7 @@ export class ContentManager {
             // Also check specific title elements
             try {
               const titleText = await el.$eval(
-                '.note-title, .title, [class*="title"], [class*="name"], h3, h4',
+                '.artifact-title, [class*="artifact-title"], .note-title, .title, [class*="title"], [class*="name"], h3, h4',
                 (e) => e.textContent?.trim() || ''
               );
               if (titleText.toLowerCase().includes(noteTitle.toLowerCase())) {
@@ -4835,6 +4838,145 @@ export class ContentManager {
     } catch (error) {
       log.warning(`  ⚠️ Error extracting note content: ${error}`);
       return null;
+    }
+  }
+
+  /**
+   * List all notes in the NotebookLM Studio panel.
+   * Handles scrolling inside the Studio panel to ensure all notes are loaded.
+   */
+  async listNotes(): Promise<NoteListResult> {
+    log.info(`📚 Listing notes in Studio panel...`);
+    try {
+      // Step 1: Ensure we are in the Studio panel
+      await this.navigateToStudio();
+      await randomDelay(1000, 2000);
+
+      // Step 2: Locate the scrollable container in the Studio panel
+      const scrollContainerSelector = '.studio-panel, [class*="studio-panel"]';
+      const containerExists = (await this.page.locator(scrollContainerSelector).count()) > 0;
+
+      if (containerExists) {
+        // Scroll the panel down a few times to trigger lazy load of old notes
+        log.info('  ⏳ Scrolling Studio panel to load all notes...');
+        for (let i = 0; i < 5; i++) {
+          await this.page.evaluate((selector) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const panel = (globalThis as any).document.querySelector(selector);
+            if (panel) {
+              panel.scrollTop = panel.scrollHeight;
+            }
+          }, scrollContainerSelector);
+          await randomDelay(300, 500);
+        }
+      }
+
+      // Step 3: Scrape note elements from the DOM
+      const notes: NotebookNote[] = [];
+      const seenTitles = new Set<string>();
+
+      // Selectors based on verified DOM structure
+      const noteItemSelector = 'artifact-library-note, [class*="artifact-item-button"]';
+      const noteElements = await this.page.locator(noteItemSelector).all();
+
+      log.info(`  🔍 Found ${noteElements.length} candidate note elements`);
+
+      for (const el of noteElements) {
+        try {
+          const titleText =
+            (await el
+              .locator('.artifact-title, [class*="artifact-title"]')
+              .first()
+              .textContent()) || '';
+          const detailsText =
+            (await el
+              .locator('.artifact-details, [class*="artifact-details"]')
+              .first()
+              .textContent()) || '';
+          const noteId =
+            (await el.getAttribute('data-note-id')) ||
+            (await el.getAttribute('data-id')) ||
+            undefined;
+
+          const title = titleText.trim();
+          if (title && !seenTitles.has(title)) {
+            seenTitles.add(title);
+            notes.push({
+              id: noteId,
+              title,
+              details: detailsText.trim() || undefined,
+            });
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      log.success(`  ✅ Successfully listed ${notes.length} notes`);
+      return { success: true, notes };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log.error(`  ❌ Failed to list notes: ${errorMsg}`);
+      return { success: false, notes: [], error: errorMsg };
+    }
+  }
+
+  /**
+   * Get the title and text content of a specific note by title or ID.
+   */
+  async getNoteContent(input: NoteGetInput): Promise<NoteGetResult> {
+    const { noteTitle, noteId } = input;
+    log.info(`📄 Fetching content of note: "${noteTitle || noteId}"`);
+    try {
+      await this.navigateToStudio();
+      await randomDelay(500, 1000);
+
+      // Reuse existing helper to find the note element
+      const noteElement = await this.findNoteElement(noteTitle, noteId);
+      if (!noteElement) {
+        return {
+          success: false,
+          title: noteTitle || '',
+          content: '',
+          error: `Note not found: "${noteTitle || noteId}"`,
+        };
+      }
+
+      // Reuse existing helper to click note, wait, and extract content text
+      const content = await this.extractNoteContent(noteElement, noteTitle);
+
+      // Close the note popover/editor if open to return to clean state
+      try {
+        await this.page.keyboard.press('Escape');
+        await randomDelay(200, 400);
+      } catch {
+        // Ignore escape errors
+      }
+
+      if (content) {
+        log.success(`  ✅ Retrieved note content (${content.length} characters)`);
+        return {
+          success: true,
+          title: noteTitle || '',
+          content,
+        };
+      } else {
+        return {
+          success: false,
+          title: noteTitle || '',
+          content: '',
+          error: 'Could not extract content from note editor.',
+        };
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      log.error(`  ❌ Failed to get note content: ${errorMsg}`);
+      return {
+        success: false,
+        title: noteTitle || '',
+        content: '',
+        error: errorMsg,
+      };
     }
   }
 }
